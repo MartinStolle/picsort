@@ -111,7 +111,7 @@ def importfolder(directory, library):
 
         if not os.path.isfile(absolutepath):
             continue
-        
+
         if not hashfile(absolutepath):
             continue
 
