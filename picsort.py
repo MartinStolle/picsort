@@ -68,12 +68,27 @@ def validatedirectory(directory):
 
 
 def copyimage(absolutepath, filename, library, metadata):
-    global copycount
     librarypath = '{0}\\{1}\\{2}'.format(metadata['year'], metadata['month'], metadata['day'])
     library = os.path.join(library, librarypath)
+    copyfile(absolutepath, filename, library, librarypath)
 
+
+def copyvideo(absolutepath, filename, library):
+    mo = re.match(r"VID_(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})_\d+\.mp4", filename)
+    if not mo:
+        logger.error('Unable to parse date from filename %s', filename)
+        return
+
+    metadata = mo.groupdict()
+    librarypath = '{0}\\{1}\\{2}'.format(metadata['year'], metadata['month'], metadata['day'])
+    library = os.path.join(library, librarypath)
+    copyfile(absolutepath, filename, library, librarypath)
+
+
+def copyfile(absolutepath, filename, library, librarypath):
+    global copycount
     if not validatedirectory(library):
-        logger.error('Directory %s for image %s not created. See previous error message', librarypath, filename)
+        logger.error('Directory %s for video %s not created. See previous error message', librarypath, filename)
         return
 
     librarypath = os.path.join(library, filename)
@@ -115,6 +130,10 @@ def importfolder(directory, library):
         if not hashfile(absolutepath):
             continue
 
+        if item.endswith(".mp4"):
+            copyvideo(absolutepath, item, library)
+            continue
+
         metadata = {}
         with open(absolutepath, 'rb') as imagebuf:
             tags = exifread.process_file(imagebuf, details=False)
@@ -136,7 +155,7 @@ def main():
                         datefmt='%d.%m %H:%M')
 
     # Standard windows picture directory
-    defaultImageStorage = os.path.join(os.getenv('USERPROFILE'), 'Pictures')
+    defaultImageStorage = os.path.join("e:\\", 'Pictures')
 
     parser = argparse.ArgumentParser(description='Import images and sort them into subfolders by date yyyy/mm/dd.')
     parser.add_argument('-r', '--recursive', action="store_true", help='Look recursively through given folder')
